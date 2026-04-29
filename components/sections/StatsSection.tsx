@@ -39,15 +39,33 @@ function Counter({ value, suffix }: { value: number; suffix: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true });
   const motionValue = useMotionValue(0);
-  const spring = useSpring(motionValue, { duration: 1800, bounce: 0 });
+
+  // improved spring (more reliable than duration)
+  const spring = useSpring(motionValue, {
+    stiffness: 100,
+    damping: 30
+  });
+
   const [display, setDisplay] = useState(0);
 
+  // 🔥 FIX: fallback if element already visible on load
   useEffect(() => {
-    if (inView) motionValue.set(value);
+    const rect = ref.current?.getBoundingClientRect();
+
+    const alreadyVisible =
+      rect && rect.top < window.innerHeight && rect.bottom >= 0;
+
+    if (inView || alreadyVisible) {
+      motionValue.set(value);
+    }
   }, [inView, motionValue, value]);
 
   useEffect(() => {
-    return spring.on("change", (latest) => setDisplay(Math.round(latest)));
+    const unsubscribe = spring.on("change", (latest) => {
+      setDisplay(Math.round(latest));
+    });
+
+    return unsubscribe;
   }, [spring]);
 
   return (
@@ -76,6 +94,7 @@ export default function StatsSection() {
             A destination with audience at planetary scale.
           </h2>
         </motion.div>
+
         <div className="grid gap-px overflow-hidden rounded-lg border border-white/10 bg-white/10 shadow-glow md:grid-cols-3">
           {stats.map((stat, index) => (
             <motion.div
@@ -93,18 +112,27 @@ export default function StatsSection() {
                 sizes="(min-width: 768px) 33vw, 100vw"
                 className="object-cover opacity-62 transition duration-700 group-hover:scale-105 group-hover:opacity-78"
               />
+
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/58 to-black/20" />
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(215,180,106,0.2),transparent_36%)]" />
+
               <div className="relative z-10 flex h-full min-h-[320px] flex-col justify-end">
                 <p className="text-6xl font-semibold leading-none text-white drop-shadow-2xl sm:text-7xl lg:text-8xl">
                   <Counter value={stat.value} suffix={stat.suffix} />
                 </p>
-                <h3 className="mt-8 text-2xl font-medium text-white">{stat.label}</h3>
-                <p className="mt-3 max-w-xs text-sm leading-6 text-white/72">{stat.detail}</p>
+
+                <h3 className="mt-8 text-2xl font-medium text-white">
+                  {stat.label}
+                </h3>
+
+                <p className="mt-3 max-w-xs text-sm leading-6 text-white/72">
+                  {stat.detail}
+                </p>
               </div>
             </motion.div>
           ))}
         </div>
+
         <div className="mt-10 grid gap-3 text-xs uppercase tracking-[0.24em] text-white/38 md:grid-cols-3">
           <p>Source-led partner narrative</p>
           <p className="md:text-center">Global tourism + daily retail</p>
