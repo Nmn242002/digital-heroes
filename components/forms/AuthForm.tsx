@@ -18,7 +18,7 @@ export default function AuthForm({ charities }: { charities: Charity[] }) {
 
     const response = await fetch(`/api/auth/${mode}`, {
       method: "POST",
-      credentials: "include", // 🔥 FIX: required for Vercel cookies
+      credentials: "include", // 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(Object.fromEntries(form)),
     });
