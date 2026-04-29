@@ -1,12 +1,24 @@
-import fs from "node:fs";
-import path from "node:path";
+type QueuedEmailNotification = {
+  to: string;
+  subject: string;
+  body: string;
+  queuedAt: string;
+  provider: "mock";
+};
 
-const logDir = path.join(process.cwd(), "data");
-const logFile = path.join(logDir, "email-notifications.json");
+const globalNotifications = globalThis as typeof globalThis & {
+  __drawclubEmailNotifications?: QueuedEmailNotification[];
+};
+
+function notificationQueue() {
+  globalNotifications.__drawclubEmailNotifications ??= [];
+  return globalNotifications.__drawclubEmailNotifications;
+}
 
 export function queueEmailNotification(input: { to: string; subject: string; body: string }) {
-  if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-  const existing = fs.existsSync(logFile) ? (JSON.parse(fs.readFileSync(logFile, "utf8")) as unknown[]) : [];
-  existing.push({ ...input, queuedAt: new Date().toISOString(), provider: "local-demo" });
-  fs.writeFileSync(logFile, JSON.stringify(existing, null, 2));
+  notificationQueue().push({ ...input, queuedAt: new Date().toISOString(), provider: "mock" });
+}
+
+export function queuedEmailNotifications() {
+  return notificationQueue();
 }

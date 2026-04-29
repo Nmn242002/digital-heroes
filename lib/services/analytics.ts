@@ -1,4 +1,4 @@
-import { repository } from "@/lib/db/repository";
+import { repository } from "@/lib/services/mockDataStore";
 import { currentPrizePool } from "@/lib/services/draws";
 
 export function getAnalytics() {

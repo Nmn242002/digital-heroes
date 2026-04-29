@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import AppShell from "@/components/app/AppShell";
 import Metric from "@/components/app/Metric";
-import { repository } from "@/lib/db/repository";
+import { repository } from "@/lib/services/mockDataStore";
 import { getAnalytics } from "@/lib/services/analytics";
 
 const heroVideo = "https://videos.pexels.com/video-files/853870/853870-hd_1920_1080_25fps.mp4";

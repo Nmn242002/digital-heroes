@@ -1,4 +1,4 @@
-import { repository } from "@/lib/db/repository";
+import { repository } from "@/lib/services/mockDataStore";
 
 export function validateStablefordScore(score: number) {
   return Number.isInteger(score) && score >= 1 && score <= 45;

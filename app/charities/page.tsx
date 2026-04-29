@@ -1,7 +1,7 @@
 import Image from "next/image";
 import AppShell from "@/components/app/AppShell";
 import CharityDirectory from "@/components/forms/CharityDirectory";
-import { repository } from "@/lib/db/repository";
+import { repository } from "@/lib/services/mockDataStore";
 
 export default function CharitiesPage() {
   const charities = repository.charities.all();

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { json, requireUser } from "@/lib/api";
-import { repository } from "@/lib/db/repository";
+import { repository } from "@/lib/services/mockDataStore";
 
 export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const user = await requireUser(request);

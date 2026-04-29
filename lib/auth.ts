@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
-import { repository } from "@/lib/db/repository";
+import { repository } from "@/lib/services/mockDataStore";
 import type { PublicUser, Role, User } from "@/lib/types";
 
 const SESSION_COOKIE = "drawclub_session";

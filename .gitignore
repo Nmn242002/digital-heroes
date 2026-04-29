@@ -11,9 +11,6 @@
 # local env files
 .env*.local
 
-# local persistent demo database
-/data
-
 # logs
 npm-debug.log*
 yarn-debug.log*

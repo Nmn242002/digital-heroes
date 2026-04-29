@@ -1,7 +1,7 @@
 import Image from "next/image";
 import AppShell from "@/components/app/AppShell";
 import AuthForm from "@/components/forms/AuthForm";
-import { repository } from "@/lib/db/repository";
+import { repository } from "@/lib/services/mockDataStore";
 
 export default function AuthPage() {
   return (

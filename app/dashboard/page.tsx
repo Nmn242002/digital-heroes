@@ -8,7 +8,7 @@ import ScoreEditor from "@/components/forms/ScoreEditor";
 import SubscribeButton from "@/components/forms/SubscribeButton";
 import WinnerProofForm from "@/components/forms/WinnerProofForm";
 import { getCurrentUser } from "@/lib/auth";
-import { repository } from "@/lib/db/repository";
+import { repository } from "@/lib/services/mockDataStore";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();

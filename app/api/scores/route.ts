@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { json, requireUser } from "@/lib/api";
-import { repository } from "@/lib/db/repository";
+import { repository } from "@/lib/services/mockDataStore";
 import { addScore } from "@/lib/services/scores";
 import { hasActiveSubscription } from "@/lib/services/subscriptions";
 

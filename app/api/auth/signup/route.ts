@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createToken, hashPassword, sessionCookieOptions, SESSION_COOKIE, toPublicUser } from "@/lib/auth";
-import { repository } from "@/lib/db/repository";
+import { repository } from "@/lib/services/mockDataStore";
 import { queueEmailNotification } from "@/lib/services/notifications";
 
 export async function POST(request: NextRequest) {

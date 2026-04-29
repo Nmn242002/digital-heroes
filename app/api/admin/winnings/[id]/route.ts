@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { json, requireUser } from "@/lib/api";
-import { repository } from "@/lib/db/repository";
+import { repository } from "@/lib/services/mockDataStore";
 import { queueEmailNotification } from "@/lib/services/notifications";
 import type { WinningStatus } from "@/lib/types";
 

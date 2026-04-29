@@ -1,4 +1,4 @@
-import { repository } from "@/lib/db/repository";
+import { repository } from "@/lib/services/mockDataStore";
 import type { DrawMode, MatchType, Score, Winning } from "@/lib/types";
 
 const numberPool = Array.from({ length: 45 }, (_, index) => index + 1);

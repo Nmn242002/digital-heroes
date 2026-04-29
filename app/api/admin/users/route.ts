@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { json, requireUser } from "@/lib/api";
 import { toPublicUser } from "@/lib/auth";
-import { repository } from "@/lib/db/repository";
+import { repository } from "@/lib/services/mockDataStore";
 import { getAnalytics } from "@/lib/services/analytics";
 
 export async function GET(request: NextRequest) {

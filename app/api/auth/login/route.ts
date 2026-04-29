@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createToken, sessionCookieOptions, SESSION_COOKIE, toPublicUser, verifyPassword } from "@/lib/auth";
-import { repository } from "@/lib/db/repository";
+import { repository } from "@/lib/services/mockDataStore";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();

@@ -1,6 +1,11 @@
-import fs from "node:fs";
-import path from "node:path";
-import { charities as seedCharities, draws as seedDraws, scores as seedScores, subscriptions as seedSubscriptions, users as seedUsers, winnings as seedWinnings } from "@/lib/db/mock";
+import {
+  charities as seedCharities,
+  draws as seedDraws,
+  scores as seedScores,
+  subscriptions as seedSubscriptions,
+  users as seedUsers,
+  winnings as seedWinnings
+} from "@/lib/db/mock";
 import type { Charity, Draw, Score, Subscription, SubscriptionStatus, User, Winning, WinningStatus } from "@/lib/types";
 
 type Store = {
@@ -12,55 +17,44 @@ type Store = {
   winnings: Winning[];
 };
 
-const dataDir = path.join(process.cwd(), "data");
-const dataFile = path.join(dataDir, "drawclub-db.json");
 const id = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
 const todayIso = () => new Date().toISOString();
+const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
 const seedStore = (): Store => ({
-  charities: seedCharities,
-  users: seedUsers,
-  scores: seedScores,
-  subscriptions: seedSubscriptions,
-  draws: seedDraws,
-  winnings: seedWinnings
+  charities: clone(seedCharities),
+  users: clone(seedUsers),
+  scores: clone(seedScores),
+  subscriptions: clone(seedSubscriptions),
+  draws: clone(seedDraws),
+  winnings: clone(seedWinnings)
 });
 
-function ensureStore() {
-  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
-  if (!fs.existsSync(dataFile)) {
-    fs.writeFileSync(dataFile, JSON.stringify(seedStore(), null, 2));
-  }
-}
+const globalStore = globalThis as typeof globalThis & {
+  __drawclubStore?: Store;
+};
 
-function readStore(): Store {
-  ensureStore();
-  const store = JSON.parse(fs.readFileSync(dataFile, "utf8")) as Store;
+function getStore(): Store {
+  globalStore.__drawclubStore ??= seedStore();
   const seeded = seedStore();
-  store.charities = store.charities.map((charity) => ({
+
+  globalStore.__drawclubStore.charities = globalStore.__drawclubStore.charities.map((charity) => ({
     ...seeded.charities.find((seedCharity) => seedCharity.id === charity.id),
     ...charity
   }));
-  return store;
-}
 
-function writeStore(store: Store) {
-  ensureStore();
-  fs.writeFileSync(dataFile, JSON.stringify(store, null, 2));
+  return globalStore.__drawclubStore;
 }
 
 function mutate<T>(callback: (store: Store) => T) {
-  const store = readStore();
-  const result = callback(store);
-  writeStore(store);
-  return result;
+  return callback(getStore());
 }
 
 export const repository = {
   users: {
-    all: () => readStore().users,
-    findById: (userId: string) => readStore().users.find((user) => user.id === userId),
-    findByEmail: (email: string) => readStore().users.find((user) => user.email.toLowerCase() === email.toLowerCase()),
+    all: () => getStore().users,
+    findById: (userId: string) => getStore().users.find((user) => user.id === userId),
+    findByEmail: (email: string) => getStore().users.find((user) => user.email.toLowerCase() === email.toLowerCase()),
     create: (input: Omit<User, "id" | "createdAt">) =>
       mutate((store) => {
         const user: User = { ...input, id: id("user"), createdAt: todayIso() };
@@ -77,11 +71,11 @@ export const repository = {
   },
   scores: {
     forUser: (userId: string) =>
-      readStore()
+      getStore()
         .scores.filter((score) => score.userId === userId)
         .sort((a, b) => b.date.localeCompare(a.date))
         .slice(0, 5),
-    all: () => readStore().scores,
+    all: () => getStore().scores,
     add: (userId: string, scoreValue: number, date: string) =>
       mutate((store) => {
         if (store.scores.some((score) => score.userId === userId && score.date === date)) {
@@ -120,8 +114,8 @@ export const repository = {
       })
   },
   charities: {
-    all: () => readStore().charities,
-    findById: (charityId: string) => readStore().charities.find((charity) => charity.id === charityId),
+    all: () => getStore().charities,
+    findById: (charityId: string) => getStore().charities.find((charity) => charity.id === charityId),
     create: (input: Omit<Charity, "id">) =>
       mutate((store) => {
         const charity = { ...input, id: id("charity") };
@@ -137,8 +131,8 @@ export const repository = {
       })
   },
   subscriptions: {
-    all: () => readStore().subscriptions,
-    forUser: (userId: string) => readStore().subscriptions.find((subscription) => subscription.userId === userId),
+    all: () => getStore().subscriptions,
+    forUser: (userId: string) => getStore().subscriptions.find((subscription) => subscription.userId === userId),
     upsert: (input: Omit<Subscription, "id">) =>
       mutate((store) => {
         const existing = store.subscriptions.find((subscription) => subscription.userId === input.userId);
@@ -160,7 +154,7 @@ export const repository = {
       })
   },
   draws: {
-    all: () => readStore().draws.sort((a, b) => b.month.localeCompare(a.month)),
+    all: () => getStore().draws.sort((a, b) => b.month.localeCompare(a.month)),
     create: (input: Omit<Draw, "id" | "createdAt">) =>
       mutate((store) => {
         const draw = { ...input, id: id("draw"), createdAt: todayIso() };
@@ -176,8 +170,8 @@ export const repository = {
       })
   },
   winnings: {
-    all: () => readStore().winnings,
-    forUser: (userId: string) => readStore().winnings.filter((winning) => winning.userId === userId),
+    all: () => getStore().winnings,
+    forUser: (userId: string) => getStore().winnings.filter((winning) => winning.userId === userId),
     createMany: (items: Omit<Winning, "id" | "createdAt">[]) =>
       mutate((store) => {
         const created = items.map((item) => ({ ...item, id: id("win"), createdAt: todayIso() }));

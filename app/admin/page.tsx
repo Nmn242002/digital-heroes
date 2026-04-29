@@ -7,7 +7,7 @@ import CharityManager from "@/components/forms/CharityManager";
 import SubscriptionStatusActions from "@/components/forms/SubscriptionStatusActions";
 import WinnerActions from "@/components/forms/WinnerActions";
 import { getCurrentUser, toPublicUser } from "@/lib/auth";
-import { repository } from "@/lib/db/repository";
+import { repository } from "@/lib/services/mockDataStore";
 import { getAnalytics } from "@/lib/services/analytics";
 
 export default async function AdminPage() {

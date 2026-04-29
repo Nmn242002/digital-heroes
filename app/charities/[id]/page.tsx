@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import AppShell from "@/components/app/AppShell";
 import LiveImpactCounter from "@/components/app/LiveImpactCounter";
 import Metric from "@/components/app/Metric";
-import { repository } from "@/lib/db/repository";
+import { repository } from "@/lib/services/mockDataStore";
 
 export default async function CharityProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

@@ -1,4 +1,4 @@
-import { repository } from "@/lib/db/repository";
+import { repository } from "@/lib/services/mockDataStore";
 import type { SubscriptionPlan } from "@/lib/types";
 
 export function activateMockSubscription(userId: string, plan: SubscriptionPlan) {
