@@ -7,6 +7,7 @@ import {
   SESSION_COOKIE,
   sessionCookieOptions,
   toPublicUser,
+  verifyPassword,
 } from "@/lib/auth";
 import { repository } from "@/lib/services/mockDataStore";
 import { queueEmailNotification } from "@/lib/services/notifications";
@@ -67,6 +68,15 @@ export async function POST(request: NextRequest) {
       });
 
       if (error) {
+        if (error.message.toLowerCase().includes("already")) {
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (!signInError) return response;
+        }
+
         return NextResponse.json(
           { error: error.message || "Could not create account." },
           { status: 400 }
@@ -94,6 +104,25 @@ export async function POST(request: NextRequest) {
     }
 
     if (repository.users.findByEmail(email)) {
+      const existingUser = repository.users.findByEmail(email);
+      if (
+        existingUser &&
+        (await verifyPassword(password, existingUser.passwordHash))
+      ) {
+        const token = await createToken(existingUser);
+        const response = NextResponse.json({
+          user: toPublicUser(existingUser),
+        });
+
+        response.cookies.set({
+          name: SESSION_COOKIE,
+          value: token,
+          ...sessionCookieOptions(),
+        });
+
+        return response;
+      }
+
       return NextResponse.json(
         { error: "An account already exists for that email." },
         { status: 409 }

@@ -15,15 +15,35 @@ export default function AuthForm({ charities }: { charities: Charity[] }) {
     setMessage("");
 
     const form = new FormData(event.currentTarget);
+    const payload = Object.fromEntries(form);
 
-    const response = await fetch(`/api/auth/${mode}`, {
+    let response = await fetch(`/api/auth/${mode}`, {
       method: "POST",
-      credentials: "include", // 
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(Object.fromEntries(form)),
+      body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
+    let data = await response.json();
+
+    if (
+      mode === "signup" &&
+      response.status === 409 &&
+      typeof data.error === "string" &&
+      data.error.toLowerCase().includes("already")
+    ) {
+      response = await fetch("/api/auth/login", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: payload.email,
+          password: payload.password,
+        }),
+      });
+      data = await response.json();
+    }
+
     setLoading(false);
 
     if (!response.ok) {
