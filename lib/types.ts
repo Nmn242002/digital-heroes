@@ -2,6 +2,8 @@
 
 export type Role = "user" | "admin";
 
+export type SubscriptionStatus = "active" | "expired" | "cancelled";
+
 // ---------- USER ----------
 
 export type User = {
@@ -9,9 +11,10 @@ export type User = {
   email: string;
   passwordHash: string;
   role: Role;
-  subscriptionStatus: "active" | "expired";
+  subscriptionStatus: SubscriptionStatus;
   charityId: string;
   charityContributionPercent: number;
+  createdAt: string;
 };
 
 export type PublicUser = Omit<User, "passwordHash">;
@@ -25,6 +28,12 @@ export type Charity = {
   impact: string;
   location: string;
   imageUrl: string;
+  website: string;
+  founded: string;
+  focusAreas: string[];
+  upcomingEvents: string[];
+  raisedTodayBase: number;
+  supporters: number;
 };
 
 // ---------- SCORE ----------
@@ -33,29 +42,39 @@ export type Score = {
   id: string;
   userId: string;
   date: string;
-  points: number;
+  score: number;
+  createdAt: string;
 };
 
 // ---------- SUBSCRIPTION ----------
 
+export type SubscriptionPlan = "monthly" | "yearly";
+
 export type Subscription = {
+  id: string;
   userId: string;
-  plan: "monthly" | "yearly";
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus;
   currentPeriodEnd: string;
+  stripeCustomerId?: string;
 };
 
 // ---------- DRAW ----------
 
-export type DrawMode = "auto" | "manual";
+export type DrawMode = "random" | "weighted";
 
-export type DrawStatus = "open" | "closed";
+export type DrawStatus = "open" | "closed" | "published";
 
 export type Draw = {
   id: string;
   month: string;
   numbers: number[];
+  mode: DrawMode;
   prizePool: number;
   status: DrawStatus;
+  rolloverAmount: number;
+  createdAt: string;
+  publishedAt?: string;
 };
 
 // ---------- WINNING ----------
@@ -75,6 +94,7 @@ export type WinningStatus =
 export type Winning = {
   id: string;
   userId: string;
+  drawId: string;
   matchType: MatchType;
   amount: number;
   status: WinningStatus;

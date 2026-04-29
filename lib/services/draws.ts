@@ -69,8 +69,9 @@ export function simulateDraw(mode: DrawMode) {
   const counts = {
     "5-match": candidates.filter((candidate) => candidate.match === "5-match").length,
     "4-match": candidates.filter((candidate) => candidate.match === "4-match").length,
-    "3-match": candidates.filter((candidate) => candidate.match === "3-match").length
-  };
+    "3-match": candidates.filter((candidate) => candidate.match === "3-match").length,
+    jackpot: 0
+  } satisfies Record<MatchType, number>;
 
   const pendingWinnings = candidates.map((candidate) => ({
     userId: candidate.user.id,

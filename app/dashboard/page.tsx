@@ -13,24 +13,8 @@ import { repository } from "@/lib/services/mockDataStore";
 export default async function DashboardPage() {
   const user = await getCurrentUser();
 
-  // ✅ FIX: avoid immediate redirect loop
   if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#102d28] text-white">
-        <div className="text-center">
-          <h2 className="text-2xl font-semibold">Checking session...</h2>
-          <p className="mt-2 text-sm text-white/70">
-            If this continues, please log in again.
-          </p>
-          <Link
-            href="/auth"
-            className="mt-4 inline-block rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#102d28]"
-          >
-            Go to login
-          </Link>
-        </div>
-      </div>
-    );
+    redirect("/auth");
   }
 
   const scores = repository.scores.forUser(user.id);
