@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import SmoothScroll from "@/components/ui/SmoothScroll";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,20 +13,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Dubai Mall | Luxury Digideck",
-  description:
-    "A cinematic browser sales deck for retail tenants, luxury brands, sponsors, and event partners."
+  title: "DrawClub | Stableford Rewards",
+  description: "Subscription-based Stableford score tracking, monthly prize draws, and charity contribution platform."
 };
 
-export default function RootLayout({
-  children
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <SmoothScroll>{children}</SmoothScroll>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
+        {children}
       </body>
     </html>
   );

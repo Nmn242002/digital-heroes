@@ -8,17 +8,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#050505",
-        charcoal: "#111111",
-        gold: "#d7b46a",
-        emerald: "#16a085"
+        forest: "#12352f",
+        cream: "#f5f1ea",
+        amber: "#b47738",
+        mint: "#e7f2ee"
       },
       fontFamily: {
         sans: ["var(--font-geist-sans)", "Arial", "sans-serif"]
       },
-      boxShadow: {
-        glow: "0 0 60px rgba(215, 180, 106, 0.16)"
-      }
+      boxShadow: {}
     }
   },
   plugins: []
