@@ -1,9 +1,14 @@
 import Image from "next/image";
+import { redirect } from "next/navigation";
 import AppShell from "@/components/app/AppShell";
 import AuthForm from "@/components/forms/AuthForm";
+import { getCurrentUser } from "@/lib/auth";
 import { repository } from "@/lib/services/mockDataStore";
 
-export default function AuthPage() {
+export default async function AuthPage() {
+  const user = await getCurrentUser();
+  if (user) redirect("/dashboard");
+
   return (
     <AppShell>
       <main className="mx-auto grid min-h-[calc(100vh-73px)] max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:px-8">

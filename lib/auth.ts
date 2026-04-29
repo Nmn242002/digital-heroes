@@ -1,7 +1,9 @@
 import { cookies } from "next/headers";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 import { repository } from "@/lib/services/mockDataStore";
-import type { PublicUser, Role, User } from "@/lib/types";
+import type { CookieOptions } from "@supabase/ssr";
+import type { PublicUser, Role, SubscriptionStatus, User } from "@/lib/types";
 
 export const SESSION_COOKIE = "drawclub_session";
 
@@ -11,6 +13,9 @@ type SessionPayload = {
   sub: string;
   email: string;
   role: Role;
+  subscriptionStatus: User["subscriptionStatus"];
+  charityId: string;
+  charityContributionPercent: number;
   exp: number;
 };
 
@@ -27,6 +32,19 @@ const secret = () =>
 
 const passwordPepper = () =>
   process.env.PASSWORD_PEPPER ?? "drawclub-password-v1";
+
+export const isSupabaseAuthConfigured = () =>
+  Boolean(supabaseAuthConfig());
+
+const supabaseAuthConfig = () => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+    process.env.SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return { url, key };
+};
 
 // ---------------- SIGN / VERIFY ----------------
 
@@ -49,6 +67,9 @@ export async function createToken(user: User) {
       sub: user.id,
       email: user.email,
       role: user.role,
+      subscriptionStatus: user.subscriptionStatus,
+      charityId: user.charityId,
+      charityContributionPercent: user.charityContributionPercent,
       exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
     } satisfies SessionPayload)
   );
@@ -101,9 +122,112 @@ export function toPublicUser(user: User): PublicUser {
   return publicUser;
 }
 
+function sessionToPublicUser(session: SessionPayload): PublicUser {
+  return {
+    id: session.sub,
+    email: session.email,
+    role: session.role,
+    subscriptionStatus: session.subscriptionStatus,
+    charityId: session.charityId,
+    charityContributionPercent: session.charityContributionPercent,
+    createdAt: new Date(session.exp * 1000).toISOString(),
+  };
+}
+
+function supabaseUserToPublicUser(user: {
+  id: string;
+  email?: string;
+  app_metadata?: Record<string, unknown>;
+  user_metadata?: Record<string, unknown>;
+  created_at?: string;
+}): PublicUser {
+  const metadata = user.user_metadata ?? {};
+  const appMetadata = user.app_metadata ?? {};
+  const role = appMetadata.role === "admin" ? "admin" : "user";
+  const subscriptionStatus =
+    metadata.subscriptionStatus === "active" ||
+    metadata.subscriptionStatus === "cancelled"
+      ? metadata.subscriptionStatus
+      : "expired";
+
+  return {
+    id: user.id,
+    email: user.email ?? "",
+    role,
+    subscriptionStatus: subscriptionStatus as SubscriptionStatus,
+    charityId:
+      typeof metadata.charityId === "string"
+        ? metadata.charityId
+        : repository.charities.all()[0]?.id ?? "",
+    charityContributionPercent:
+      typeof metadata.charityContributionPercent === "number"
+        ? metadata.charityContributionPercent
+        : Number(metadata.charityContributionPercent ?? 10),
+    createdAt: user.created_at ?? new Date().toISOString(),
+  };
+}
+
+export function createSupabaseRouteClient(
+  request: NextRequest,
+  response: NextResponse
+) {
+  const config = supabaseAuthConfig();
+  if (!config) return null;
+
+  return createServerClient(config.url, config.key, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet, headers) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          response.cookies.set(name, value, options as CookieOptions);
+        });
+        Object.entries(headers).forEach(([key, value]) => {
+          response.headers.set(key, value);
+        });
+      },
+    },
+  });
+}
+
+async function getSupabaseCurrentUser() {
+  const config = supabaseAuthConfig();
+  if (!config) return null;
+
+  const cookieStore = await cookies();
+  const supabase = createServerClient(config.url, config.key, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options as CookieOptions);
+          });
+        } catch {
+          // Server Components cannot always write refreshed cookies.
+        }
+      },
+    },
+  });
+
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) return null;
+  return supabaseUserToPublicUser(user);
+}
+
 // ---------------- SESSION ----------------
 
 export async function getCurrentUser() {
+  const supabaseUser = await getSupabaseCurrentUser();
+  if (supabaseUser) return supabaseUser;
+
   const cookieStore = await cookies(); // ✅ FIXED
 
   const token = cookieStore.get(SESSION_COOKIE)?.value;
@@ -112,17 +236,29 @@ export async function getCurrentUser() {
   if (!session) return null;
 
   const user = repository.users.findById(session.sub);
-  return user ? toPublicUser(user) : null;
+  return user ? toPublicUser(user) : sessionToPublicUser(session);
 }
 
 export async function getSessionFromRequest(request: NextRequest) {
+  const response = NextResponse.next();
+  const supabase = createSupabaseRouteClient(request, response);
+
+  if (supabase) {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (!error && user) return supabaseUserToPublicUser(user);
+  }
+
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   const session = await verifyToken(token);
 
   if (!session) return null;
 
   const user = repository.users.findById(session.sub);
-  return user ? toPublicUser(user) : null;
+  return user ? toPublicUser(user) : sessionToPublicUser(session);
 }
 
 // ---------------- COOKIE CONFIG ----------------
