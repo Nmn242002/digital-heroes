@@ -21,7 +21,10 @@ export type PublicUser = Omit<User, "passwordHash">;
 export type Charity = {
   id: string;
   name: string;
+  description: string;
   impact: string;
+  location: string;
+  imageUrl: string;
 };
 
 // ---------- SCORE ----------
